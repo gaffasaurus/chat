@@ -28,12 +28,10 @@
       left: 50%;
       transform: translate(-50%, -50%);
       margin-top: 20px;
-    }
-    .writeMessage {
       display: flex;
-      flex-direction: row;
-      transform: translate(-0.5%, 0);
-      padding-top: 2px;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
     .display {
       font-family: helvetica;
@@ -42,6 +40,13 @@
       padding-left: 25px;
       padding-bottom: 0px;
       overflow-y: scroll;
+    }
+    .writeMessage {
+      display: flex;
+      flex-direction: row;
+      padding-top: 2px;
+      position: relative;
+      left: 5%;
     }
     #input {
       height: 25px;
@@ -54,10 +59,9 @@
   <p style="margin-top: -5px; text-align: center">Awaiting connection...</p>
   <div class="messages">
     <div class="display">
-
     </div>
     <div class="writeMessage">
-      <input type="test" size="78" id="input" placeholder="Write a message..."></input>
+      <input type="test" size="79" id="input" placeholder="Write a message..."></input>
       <button id="sendButton" onclick="sendMessage()">Send</button>
     </div>
   </div>

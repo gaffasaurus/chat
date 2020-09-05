@@ -23,12 +23,58 @@
       margin: 15px;
       width: 400px;
     }
+    .inputInfo {
+      display:none;
+    }
+    .inputId {
+      display: flex;
+      flex-direction: column;
+      transform: translate(0, -50%);
+    }
+    .inputName {
+      display: none;
+      flex-direction: column;
+      transform: translate(0, -50%);
+    }
+    .nameField, .idField {
+      display: flex;
+      flex-direction: row;
+    }
+    #nameLabel, #idLabel {
+      font-size: 20px;
+      text-align: center;
+    }
+    #nameField, #idField {
+      height: 30px;
+      margin-right: 5px;
+    }
+    #submitName, #submitId {
+      text-align: center;
+      font-size: 16px;
+    }
+
 
   </style>
 </head>
 <body>
-  <button class="room" name="create" onclick="openRoom()">Create Room</button>
-  <button class="room" name="join" onclick="openRoom()">Join Room</button>
+  <button class="room" name="create" onclick="inputInfo('create')">Create Room</button>
+  <button class="room" name="join" onclick="inputInfo('join')">Join Room</button>
+  <div class="inputInfo">
+    <div class="inputId">
+      <p id="idLabel">Input Room ID:</p>
+      <div class="idField">
+        <input type="text" id="idField" size="30" placeholder = "Type Room ID..."></input>
+        <button id="submitId" onclick="inputName()">Submit</button>
+      </div>
+    </div>
+    <div class="inputName">
+      <p id="nameLabel">Choose a username (optional):</p>
+      <div class="nameField">
+        <input type="text" id="nameField" size="50" placeholder="Type your name..."></input>
+        <button id="submitName" onclick="enterRoom()">Join</button>
+      </div>
+    </div>
+  </div>
 </body>
-<script src="buttons.js"></script>
+<script src="home.js"></script>
 </html>

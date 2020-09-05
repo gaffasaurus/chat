@@ -3,9 +3,18 @@ const height = window.innerHeight;
 console.log(width, height/1.5)
 
 const display = document.getElementsByClassName("display")[0];
-display.style = "outline: 1.5px solid black; width: " + width/2.5 + "px; height: " + height/1.4 + "px; background-color: rgb(227, 238, 255);)";
+display.style += "; outline: 1.5px solid black; width: " + width/2.5 + "px; height: " + height/1.4 + "px; background-color: rgb(227, 238, 255);";
 
 const input = document.getElementById("input");
+
+const peer = new Peer();
+let roomId;
+
+peer.on('open', id => {
+  roomId = id;
+  const h1 = document.getElementsByTagName("h1")[0];
+  h1.innerHTML = "ID: " + id;
+})
 
 function sendMessage() {
   const text = input.value;
