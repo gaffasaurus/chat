@@ -1,3 +1,3 @@
 function openRoom() {
-  window.open("room.html", "_self");
+  window.open("room/room.html", "_self");
 }
