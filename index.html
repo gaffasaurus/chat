@@ -30,6 +30,7 @@
       display: flex;
       flex-direction: column;
       transform: translate(0, -50%);
+      justify-content: center;
     }
     .inputName {
       display: none;
@@ -64,8 +65,9 @@
       <p id="idLabel">Input Room ID:</p>
       <div class="idField">
         <input type="text" id="idField" size="30" placeholder = "Type Room ID..."></input>
-        <button id="submitId" onclick="inputName()">Submit</button>
+        <button id="submitId" onclick="validateId(idField.value)">Submit</button>
       </div>
+      <p id="connecting"></p>
     </div>
     <div class="inputName">
       <p id="nameLabel">Choose a username (optional):</p>
@@ -76,5 +78,6 @@
     </div>
   </div>
 </body>
+<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
 <script src="home.js"></script>
 </html>
