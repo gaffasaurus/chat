@@ -6,79 +6,75 @@
   <title>PeerJS Test</title>
   <style>
     body {
-      flex: auto;
+      font-family: helvetica;
+    }
+    #home {
       display: flex;
-      font-family: sans-serif;
-      justify-content: center;
-      align-items: center;
       flex-direction: column;
+      align-items: center;
+      text-align: center;
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
+      transform: translate(-50%, -70%);
     }
-    .room {
-      font-size: 30px;
-      padding: 14px;
-      margin: 15px;
-      width: 400px;
-    }
-    .inputInfo {
-      display:none;
-    }
-    .inputId {
-      display: flex;
-      flex-direction: column;
-      transform: translate(0, -50%);
-      justify-content: center;
-    }
-    .inputName {
+    #chatroom {
       display: none;
       flex-direction: column;
-      transform: translate(0, -50%);
+      justify-content: center;
+      align-items: center;
     }
-    .nameField, .idField {
+    #message-board {
+      font-size: 16px;
+      outline: 1.5px solid gray;
+      overflow-y: scroll;
+      margin-bottom: 3px;
+      padding-left: 20px;
+    }
+    #write-message {
       display: flex;
       flex-direction: row;
+      align-items: center;
+      justify-content: center;
     }
-    #nameLabel, #idLabel {
-      font-size: 20px;
-      text-align: center;
-    }
-    #nameField, #idField {
+    #input-message {
       height: 30px;
       margin-right: 5px;
     }
-    #submitName, #submitId {
-      text-align: center;
-      font-size: 16px;
+    #send-message {
+      height: 35px;
     }
 
 
   </style>
 </head>
 <body>
-  <button class="room" name="create" onclick="inputInfo('create')">Create Room</button>
-  <button class="room" name="join" onclick="inputInfo('join')">Join Room</button>
-  <div class="inputInfo">
-    <div class="inputId">
-      <p id="idLabel">Input Room ID:</p>
-      <div class="idField">
-        <input type="text" id="idField" size="30" placeholder = "Type Room ID..."></input>
-        <button id="submitId" onclick="validateId(idField.value)">Submit</button>
-      </div>
-      <p id="connecting"></p>
+  <div id="home">
+    <h1 id="title" style="text-align: center; margin-bottom: 50px;">PeerJS Chatroom</h1>
+    <button id="create-room-button" style="width: 200px; height: 50px; margin-bottom: 15px;" onclick="enterRoom('create')">Create Room</button>
+    <div id="join-room">
+      <p style="font-size: 16px">Or Join Room With ID:</p>
+      <input id="join-room-field" type="text" size="32" style="height: 25px" placeholder="Enter Room ID..."></input>
+      <button style="height: 30px" onclick="validateId()">Join</button>
     </div>
-    <div class="inputName">
-      <p id="nameLabel">Choose a username (optional):</p>
-      <div class="nameField">
-        <input type="text" id="nameField" size="50" placeholder="Type your name..."></input>
-        <button id="submitName" onclick="enterRoom()">Join</button>
+    <p id="error-msg">
+
+    </p>
+  </div>
+  <div id="chatroom">
+    <h1 id="display-id" style="font-size: 20px">ID: Generating...</h1>
+    <p style="margin-top: -5px; text-align: center">Awaiting connection...</p>
+    <div id="messages">
+      <div id="message-board">
+        <p style="text-decoration: underline">Welcome to the room! Send the room ID above to friends to begin chatting!</p>
+      </div>
+      <div id="write-message">
+        <input type="test" size="95" id="input-message" placeholder="Write a message..."></input>
+        <button id="send-message">Send</button>
       </div>
     </div>
   </div>
 </body>
 <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
-<script src="home.js"></script>
-<script src="variables.js"></script>
+<script src="main.js"></script>
 </html>
