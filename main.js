@@ -74,7 +74,6 @@ function validateId(id) {
 }
 
 function enterRoom(action) {
-  console.log(conn);
   const messageBoardWidth = width/1.7;
 
   home.style.display = "none";
@@ -90,12 +89,10 @@ function enterRoom(action) {
   // if (action === "create") {
   //   createRoom();
   // }
-  if (conn) {
-    conn.on('data', data => {
-      console.log("received data");
-      sendMessage(data);
-    });
-  }
+    // conn.on('data', data => {
+    //   console.log("received data");
+    //   sendMessage(data);
+    // });
 }
 
 function updateAllConnections(conn) {
