@@ -16,9 +16,10 @@ joinRoomField.addEventListener("keypress", e => {
 });
 
 const allConnections = [];
+const allMessages = [];
 const peer = new Peer();
-let conn;
 let peerId;
+let isHost = false;
 initializePeer();
 
 function initializePeer() {
@@ -33,24 +34,39 @@ function initializePeer() {
 }
 
 function createRoom() {
+  isHost = true;
   console.log("room created");
   const displayId = document.getElementById("display-id");
   displayId.innerHTML = "ID: " + peerId;
   peer.on("connection", conn => {
     console.log("Received connection");
+    updateAllConnections(conn);
+    console.log(allConnections);
   });
-  updateAllConnections(peer);
+  enterRoom('create');
 }
 
 function joinRoom() {
+  // TODO: Block connecting to people joining rooms
+  // peer.on('connection', c => {
+  //   c.on('open', () => {
+  //     c.send("ID does not accept incoming connections");
+  //     setTimeout(() => {
+  //       c.close();
+  //     }, 500);
+  //     c.on('data', () => {
+  //       alert(data);
+  //     });
+  //   });
+  // });
   validateId(joinRoomField.value);
 }
 
 function validateId(id) {
-  conn = peer.connect(id);
+  let conn = peer.connect(id);
   conn.on('open', () => {
     console.log("connected!");
-    updateAllConnections(peer);
+    updateAllConnections(conn);
     const displayId = document.getElementById("display-id");
     displayId.innerHTML = "ID: " + conn.peer;
     enterRoom('join');
@@ -58,6 +74,7 @@ function validateId(id) {
 }
 
 function enterRoom(action) {
+  console.log(conn);
   const messageBoardWidth = width/1.7;
 
   home.style.display = "none";
@@ -67,29 +84,38 @@ function enterRoom(action) {
 
   inputMessage.addEventListener("keypress", e => {
     if (e.keyCode === 13) {
-      sendMessage();
+      sendMessage(inputMessage.value);
     }
   });
-  if (action === "create") {
-    createRoom();
-  } else {
+  // if (action === "create") {
+  //   createRoom();
+  // }
+  if (conn) {
+    conn.on('data', data => {
+      console.log("received data");
+      sendMessage(data);
+    });
   }
 }
 
-function updateAllConnections(peer) {
-  if (!allConnections.includes(peer)) {
-    allConnections.push(peer);
+function updateAllConnections(conn) {
+  if (!allConnections.includes(conn)) {
+    allConnections.push(conn);
   }
 }
 
-function sendMessage() {
-  const value = inputMessage.value;
+function sendMessage(msg) {
   console.log(allConnections);
   for (let connection of allConnections) {
-    connection.send(value);
+    connection.send(msg);
   }
-  displayMessage(value);
+  displayMessage(msg);
   inputMessage.value = "";
+  allMessages.push({
+    sender: peer,
+    message: msg
+  });
+  console.log(allMessages);
 }
 
 function displayMessage(text) {
