@@ -15,8 +15,9 @@ joinRoomField.addEventListener("keypress", e => {
   }
 });
 
-const allConnections = [];
-const allMessages = [];
+let allConnections = [];
+let allMembers = [];
+let allMessages = [];
 const peer = new Peer();
 let peerId;
 let isHost = false;
@@ -41,7 +42,13 @@ function createRoom() {
   peer.on("connection", conn => {
     console.log("Received connection");
     updateAllConnections(conn);
-    console.log(allConnections);
+    updateAllMembers();
+    // for (let c of allConnections) {
+    //   // c.send(allConnections);
+    //   c.send(allMembers);
+    conn.on('data', data => {
+      sendMessage(conn.peer, data);
+    })
   });
   enterRoom('create');
 }
@@ -67,9 +74,18 @@ function validateId(id) {
   conn.on('open', () => {
     console.log("connected!");
     updateAllConnections(conn);
+    updateAllMembers();
     const displayId = document.getElementById("display-id");
     displayId.innerHTML = "ID: " + conn.peer;
     enterRoom('join');
+  });
+  conn.on('data', data => {
+    // if (typeof(data) === "string") {
+    //   sendMessage(conn, data);
+    // } else if (Array.isArray(data)) {
+    //   allMembers = data;
+    // }
+    displayMessage(conn.peer, data);
   });
 }
 
@@ -82,8 +98,9 @@ function enterRoom(action) {
   messageBoard.style.height= height/1.4 + "px";
 
   inputMessage.addEventListener("keypress", e => {
-    if (e.keyCode === 13) {
-      sendMessage(inputMessage.value);
+    if (e.keyCode === 13 && inputMessage.value.length > 0) {
+      sendMessage(peer, inputMessage.value);
+      console.log(allConnections, allMembers);
     }
   });
   // if (action === "create") {
@@ -101,26 +118,33 @@ function updateAllConnections(conn) {
   }
 }
 
-function sendMessage(msg) {
-  console.log(allConnections);
-  for (let connection of allConnections) {
-    connection.send(msg);
-  }
-  displayMessage(msg);
-  inputMessage.value = "";
-  allMessages.push({
-    sender: peer,
-    message: msg
-  });
-  console.log(allMessages);
+function updateAllMembers() {
+  allMembers.length = 0;
+  allMembers.push(peerId);
+  for (let c of allConnections) allMembers.push(c.peer);
 }
 
-function displayMessage(text) {
+function sendMessage(sender, msg) {
+  for (let c of allConnections) {
+    if (c && c.open) {
+      if (c.peer != sender) c.send(msg);
+    }
+  }
+  displayMessage(sender, msg);
+  inputMessage.value = "";
+}
+
+function displayMessage(sender, text) {
   const p = document.createElement("p");
   const node = document.createTextNode(text);
   p.appendChild(node);
   messageBoard.appendChild(p);
   messageBoard.scrollTo(0, messageBoard.scrollHeight);
+  allMessages.push({
+    sender: peer,
+    message: text
+  });
+  console.log(allMessages);
 }
 
 // function validateId(id) {
