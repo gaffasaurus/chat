@@ -41,28 +41,37 @@ function createRoom() {
   console.log("room created");
   const displayId = document.getElementById("display-id");
   displayId.innerHTML = "ID: " + peerId;
+  peer.on("connection", conn => {
+    alert("Received connection");
+  });
 }
 
 function joinRoom() {
-  console.log("success!");
-
+  validateId(joinRoomField.value);
 }
 
 function validateId(id) {
-  const dataConnection = peer.connect(id);
-  const joinMsg = document.getElementById("error-msg");
-  joinMsg.style = "font-size: 16px";
-  joinMsg.innerHTML = "Connecting...";
-  console.log(dataConnection);
-  dataConnection.on('open', () => {
-    joinRoom();
-    return;
+  conn = peer.connect(id);
+  conn.on('open', () => {
+    console.log("connected!");
   });
-  setTimeout(() => {
-    joinMsg.innerHTML = "Unable to connect to the room. Check ID and try again.";
-    joinMsg.style.color = "red";
-  }, 5000);
 }
+
+// function validateId(id) {
+//   const dataConnection = peer.connect(id);
+//   const joinMsg = document.getElementById("error-msg");
+//   joinMsg.style = "font-size: 16px";
+//   joinMsg.innerHTML = "Connecting...";
+//   console.log(dataConnection);
+//   dataConnection.on('open', () => {
+//     joinRoom();
+//     return;
+//   });
+//   setTimeout(() => {
+//     joinMsg.innerHTML = "Unable to connect to the room. Check ID and try again.";
+//     joinMsg.style.color = "red";
+//   }, 5000);
+// }
 
 function initializePeer() {
   peer.on("open", id => {
@@ -70,6 +79,7 @@ function initializePeer() {
     peerId = id;
   });
 
-
-
+  peer.on("error", err => {
+    alert("" + err);
+  });
 }
