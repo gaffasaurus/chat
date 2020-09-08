@@ -138,7 +138,7 @@ function createRoom() {
           break;
         }
       }
-    })
+    });
   });
   enterRoom('create');
 }
