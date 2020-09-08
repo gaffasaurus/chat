@@ -129,7 +129,6 @@ function createRoom() {
           addMember(data[1], data[2]);
           for (let c of allConnections) {
             if (c && c.open) {
-              console.log(availableColors);
               c.send(['members', allMembers]);
             }
           }
@@ -139,6 +138,14 @@ function createRoom() {
         }
       }
     });
+  });
+  peer.on("close", () => {
+    console.log("Closed");
+    removeMember(peerId, username);
+    for (let c of allConnections) {
+      c.send(['members', allMembers]);
+    }
+    peer.destroy();
   });
   enterRoom('create');
 }
@@ -151,9 +158,6 @@ function joinRoom() {
   //     setTimeout(() => {
   //       c.close();
   //     }, 500);
-  //     c.on('data', () => {
-  //       alert(data);
-  //     });
   //   });
   // });
   validateId(joinRoomField.value);
@@ -186,6 +190,10 @@ function validateId(id) {
       case "color": {
         myColor = data[1];
         break;
+      }
+      case "close": {
+        alert("The host has closed the room.");
+        location.reload();
       }
     }
   });
@@ -249,8 +257,13 @@ function addMember(id, username) {
   allMembers.push([id, username]);
 }
 
-function removeMembers(id, username) {
-
+function removeMember(id, username) {
+  for (let member of allMembers) {
+    if (member[0] === id && member[1] === username) {
+      removeFromArray(allMembers, member);
+      break;
+    }
+  }
 }
 
 // function updateAvailableColors(update) {
