@@ -260,6 +260,8 @@ function removeMembers(id, username) {
 //   }
 // }
 
+const time = new Date();
+
 function sendMessage(senderId, senderName, msg, senderColor) {
   console.log(senderColor);
   for (let c of allConnections) {
@@ -278,7 +280,13 @@ function displayMessage(senderId, senderName, text, senderColor) {
   // const node = document.createTextNode("<span style= 'color: " + myColor + "';>" +  senderName + ":  </span>" + text);
   // p.appendChild(node);
   messageBoard.appendChild(p);
-  p.innerHTML = "<span style= 'color: " + senderColor + "';>" +  senderName + ":  </span>" + text;
+  let timeStamp;
+  if (time.getHours() > 12) {
+    timeStamp = (time.getHours() - 12) + ":" + time.getMinutes() + " PM";
+  } else {
+    timeStamp = time.getHours() + ":" + time.getMinutes() + " AM";
+  }
+  p.innerHTML = "<span style='color: gray'>" + timeStamp + "  -  " + "</span>" + "<span style='color: " + senderColor + "';>" + senderName + ":  </span>" + text;
   messageBoard.scrollTo(0, messageBoard.scrollHeight);
   allMessages.push({
     senderId: peer,
