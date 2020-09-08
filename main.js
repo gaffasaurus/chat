@@ -260,8 +260,6 @@ function removeMembers(id, username) {
 //   }
 // }
 
-const time = new Date();
-
 function sendMessage(senderId, senderName, msg, senderColor) {
   console.log(senderColor);
   for (let c of allConnections) {
@@ -280,6 +278,7 @@ function displayMessage(senderId, senderName, text, senderColor) {
   // const node = document.createTextNode("<span style= 'color: " + myColor + "';>" +  senderName + ":  </span>" + text);
   // p.appendChild(node);
   messageBoard.appendChild(p);
+  const time = new Date();
   let timeStamp;
   if (time.getHours() > 12) {
     timeStamp = (time.getHours() - 12) + ":" + time.getMinutes() + " PM";
