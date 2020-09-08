@@ -12,11 +12,34 @@ const joinRoomField = document.getElementById("join-room-field");
 joinRoomField.addEventListener("keypress", e => {
   if (e.keyCode === 13) {
     const value = joinRoomField.value;
-    chooseUsername();
+    enterUsername();
   }
 });
 const joinMsg = document.getElementById("error-msg");
 
+const colors = {
+  red: "rgb(255, 0, 0)",
+  blue: "rgb(0, 0, 255)",
+  green: "rgb(60, 179, 113)",
+  pink: "rgb(238, 130, 238)",
+  yellow: "rgb(255, 165, 0)",
+  purple: "rgb(106, 90, 205)",
+  cyan: "rgb(0, 255, 255)",
+  orange: "rgb(255,140,0)",
+  brown: "rgb(139,69,19)",
+  crimson: "rgb(220,20,60)"
+};
+
+const availableColors = [];
+refillColors();
+
+function refillColors() {
+  if (availableColors.length === 0) {
+    for (let color in colors) {
+      availableColors.push(colors[color]);
+    }
+  }
+}
 
 let allConnections = [];
 let allMembers = [];
@@ -24,6 +47,7 @@ let allMessages = [];
 const peer = new Peer();
 let peerId;
 let username;
+let myColor;
 let isHost = false;
 initializePeer();
 
@@ -32,22 +56,33 @@ function enterUsername(action) {
   home.style.display = "none";
   const usernameField = document.getElementById("username-field");
   usernameField.addEventListener("keypress", e => {
+    if (usernameField.value.length > 15 && e.keyCode !== 13) {
+      usernameField.value.length = 15;
+    }
     if (e.keyCode === 13) {
+      if (usernameField.value.length > 0) {
+        username = usernameField.value;
+        if (action === "create") {
+          createRoom();
+        } else {
+          joinRoom();
+        }
+      } else {
+        alert("Username cannot be empty!");
+      }
+    }
+  });
+  const submitUsername = document.getElementById("submit-username");
+  submitUsername.addEventListener("click", e => {
+    if (usernameField.value.length > 0) {
       username = usernameField.value;
       if (action === "create") {
         createRoom();
       } else {
         joinRoom();
       }
-    }
-  });
-  const submitUsername = document.getElementById("submit-username");
-  submitUsername.addEventListener("click", e => {
-    username = usernameField.value;
-    if (action === "create") {
-      createRoom();
     } else {
-      joinRoom();
+      alert("Username cannot be empty!");
     }
   });
 }
@@ -72,11 +107,14 @@ function initializePeer() {
 
 function createRoom() {
   isHost = true;
+  myColor = availableColors.shift();
   console.log("room created");
   addMember(peerId, username);
+  updateMemberDisplay();
   peer.on("connection", conn => {
     console.log("Received connection");
     updateAllConnections(conn);
+    console.log(allConnections);
     // updateAllMembers();
     // for (let c of allConnections) {
     //   // c.send(allConnections);
@@ -84,17 +122,21 @@ function createRoom() {
     conn.on('data', data => {
       switch (data[0]) {
         case "message": {
-          sendMessage(conn.peer, data[1], data[2]);
+          sendMessage(conn.peer, data[1], data[2], data[3]);
           break;
         }
         case "username": {
           addMember(data[1], data[2]);
           for (let c of allConnections) {
-            if (c && c.open) c.send(['members', allMembers]);
+            if (c && c.open) {
+              console.log(availableColors);
+              c.send(['members', allMembers]);
+            }
           }
+          conn.send(['color', availableColors.shift()]);
           updateMemberDisplay();
+          break;
         }
-
       }
     })
   });
@@ -128,29 +170,28 @@ function validateId(id) {
     const displayId = document.getElementById("display-id");
     displayId.innerHTML = "ID: " + conn.peer;
     enterRoom('join');
-    conn.send(["username", peerId, username])
+    conn.send(["username", peerId, username]);
   });
   conn.on('data', data => {
-    // if (typeof(data) === "string") {
-    //   sendMessage(conn, data);
-    // } else if (Array.isArray(data)) {
-    //   allMembers = data;
-    // }
     switch (data[0]) {
       case "message": {
-        displayMessage(conn.peer, data[1], data[2]);
+        displayMessage(conn.peer, data[1], data[2], data[3]);
         break;
       }
       case "members": {
         updateAllMembers(data[1]);
         console.log(allMembers);
+        break;
+      }
+      case "color": {
+        myColor = data[1];
+        break;
       }
     }
   });
 }
 
 function enterRoom(action) {
-  console.log(username);
   const messageBoardWidth = width/1.7;
 
   chooseUsername.style.display = "none";
@@ -160,12 +201,15 @@ function enterRoom(action) {
 
   inputMessage.addEventListener("keypress", e => {
     if (e.keyCode === 13 && inputMessage.value.length > 0) {
-      sendMessage(peer, username, inputMessage.value);
+      sendMessage(peer, username, inputMessage.value, myColor);
+      inputMessage.value = "";
       console.log(allConnections, allMembers);
     }
   });
   sendButton.addEventListener("click", e => {
-    sendMessage(peer, username, inputMessage.value);
+    if (inputMessage.value.length > 0) {
+      sendMessage(peer, username, inputMessage.value, myColor);
+    }
   })
   // if (action === "create") {
   //   createRoom();
@@ -209,21 +253,32 @@ function removeMembers(id, username) {
 
 }
 
-function sendMessage(senderId, senderName, msg) {
+// function updateAvailableColors(update) {
+//   availableColors.length = 0;
+//   for (let color of update) {
+//     availableColors.push(color);
+//   }
+// }
+
+function sendMessage(senderId, senderName, msg, senderColor) {
+  console.log(senderColor);
   for (let c of allConnections) {
     if (c && c.open) {
-      if (c.peer != senderId) c.send(["message", senderName, msg]);
+      if (c.peer != senderId) c.send(["message", senderName, msg, senderColor]);
     }
   }
-  displayMessage(senderId, senderName, msg);
-  inputMessage.value = "";
+  displayMessage(senderId, senderName, msg, senderColor);
+  if (senderId === peerId) {
+    inputMessage.value = "";
+  }
 }
 
-function displayMessage(senderId, senderName, text) {
+function displayMessage(senderId, senderName, text, senderColor) {
   const p = document.createElement("p");
-  const node = document.createTextNode(senderName + ":  " + text);
-  p.appendChild(node);
+  // const node = document.createTextNode("<span style= 'color: " + myColor + "';>" +  senderName + ":  </span>" + text);
+  // p.appendChild(node);
   messageBoard.appendChild(p);
+  p.innerHTML = "<span style= 'color: " + senderColor + "';>" +  senderName + ":  </span>" + text;
   messageBoard.scrollTo(0, messageBoard.scrollHeight);
   allMessages.push({
     senderId: peer,
@@ -231,6 +286,10 @@ function displayMessage(senderId, senderName, text) {
     message: text
   });
   console.log(allMessages);
+}
+
+function removeFromArray(arr, element) {
+  arr.splice(arr.indexOf(element), 1);
 }
 
 // function validateId(id) {
