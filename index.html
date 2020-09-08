@@ -18,6 +18,19 @@
       left: 50%;
       transform: translate(-50%, -70%);
     }
+    #choose-username {
+      display: none;
+      flex-direction: column;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -70%);
+      align-items: center;
+    }
+    #input-username {
+      display: flex;
+      flex-direction: row;
+    }
     #chatroom {
       display: none;
       flex-direction: column;
@@ -51,26 +64,33 @@
 <body>
   <div id="home">
     <h1 id="title" style="text-align: center; margin-bottom: 50px;">PeerJS Chatroom</h1>
-    <button id="create-room-button" style="width: 200px; height: 50px; margin-bottom: 15px;" onclick="createRoom()">Create Room</button>
+    <button id="create-room-button" style="width: 200px; height: 50px; margin-bottom: 15px;" onclick="enterUsername('create')">Create Room</button>
     <div id="join-room">
       <p style="font-size: 16px">Or Join Room With ID:</p>
       <input id="join-room-field" type="text" size="32" style="height: 25px" placeholder="Enter Room ID..."></input>
-      <button style="height: 30px" onclick="joinRoom()">Join</button>
+      <button style="height: 30px" onclick="enterUsername('join')">Join</button>
     </div>
     <p id="error-msg">
 
     </p>
   </div>
+  <div id="choose-username">
+    <p style="font-size: 16px">Enter username (leave blank to auto generate)</p>
+    <div id="input-username">
+      <input id="username-field" type="text" size=32 style="height: 25px" placeholder="Enter username..."></input>
+      <button id = "submit-username" style="height: 30px">Join</button>
+    </div>
+  </div>
   <div id="chatroom">
     <h1 id="display-id" style="font-size: 20px">ID: Generating...</h1>
-    <p style="margin-top: -5px; text-align: center">Awaiting connection...</p>
+    <p id="display-members" style="margin-top: -5px; text-align: center">Awaiting connection...</p>
     <div id="messages">
       <div id="message-board">
         <p style="text-decoration: underline">Welcome to the room! Send the room ID above to friends to begin chatting!</p>
       </div>
       <div id="write-message">
-        <input type="test" size="95" id="input-message" placeholder="Write a message..."></input>
-        <button id="send-message" onclick="sendMessage(document.getElementById('input-message').value)">Send</button>
+        <input type="text" size="95" id="input-message" placeholder="Write a message..."></input>
+        <button id="send-message">Send</button>
       </div>
     </div>
   </div>

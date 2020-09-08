@@ -3,51 +3,99 @@ const height = window.innerHeight;
 
 const chatRoom = document.getElementById("chatroom");
 const home = document.getElementById("home");
+const chooseUsername = document.getElementById("choose-username");
 const messageBoard = document.getElementById("message-board");
 const inputMessage = document.getElementById("input-message");
-
+const sendButton = document.getElementById("send-message");
 
 const joinRoomField = document.getElementById("join-room-field");
 joinRoomField.addEventListener("keypress", e => {
   if (e.keyCode === 13) {
     const value = joinRoomField.value;
-    joinRoom();
+    chooseUsername();
   }
 });
+const joinMsg = document.getElementById("error-msg");
+
 
 let allConnections = [];
 let allMembers = [];
 let allMessages = [];
 const peer = new Peer();
 let peerId;
+let username;
 let isHost = false;
 initializePeer();
+
+function enterUsername(action) {
+  chooseUsername.style.display = "flex";
+  home.style.display = "none";
+  const usernameField = document.getElementById("username-field");
+  usernameField.addEventListener("keypress", e => {
+    if (e.keyCode === 13) {
+      username = usernameField.value;
+      if (action === "create") {
+        createRoom();
+      } else {
+        joinRoom();
+      }
+    }
+  });
+  const submitUsername = document.getElementById("submit-username");
+  submitUsername.addEventListener("click", e => {
+    username = usernameField.value;
+    if (action === "create") {
+      createRoom();
+    } else {
+      joinRoom();
+    }
+  });
+}
 
 function initializePeer() {
   peer.on("open", id => {
     console.log("My ID: " + id);
     peerId = id;
+    const displayId = document.getElementById("display-id");
+    displayId.innerHTML = "ID: " + peerId;
   });
 
   peer.on("error", err => {
-    alert("" + err);
+    if (home.style.display != "none") {
+      joinMsg.innerHTML = err;
+      joinMsg.style.color = "red";
+    } else {
+      alert(err);
+    }
   });
 }
 
 function createRoom() {
   isHost = true;
   console.log("room created");
-  const displayId = document.getElementById("display-id");
-  displayId.innerHTML = "ID: " + peerId;
+  addMember(peerId, username);
   peer.on("connection", conn => {
     console.log("Received connection");
     updateAllConnections(conn);
-    updateAllMembers();
+    // updateAllMembers();
     // for (let c of allConnections) {
     //   // c.send(allConnections);
     //   c.send(allMembers);
     conn.on('data', data => {
-      sendMessage(conn.peer, data);
+      switch (data[0]) {
+        case "message": {
+          sendMessage(conn.peer, data[1], data[2]);
+          break;
+        }
+        case "username": {
+          addMember(data[1], data[2]);
+          for (let c of allConnections) {
+            if (c && c.open) c.send(['members', allMembers]);
+          }
+          updateMemberDisplay();
+        }
+
+      }
     })
   });
   enterRoom('create');
@@ -71,13 +119,16 @@ function joinRoom() {
 
 function validateId(id) {
   let conn = peer.connect(id);
+  joinMsg.style = "font-size: 16px";
+  joinMsg.innerHTML = "Connecting...";
   conn.on('open', () => {
     console.log("connected!");
     updateAllConnections(conn);
-    updateAllMembers();
+    // updateAllMembers();
     const displayId = document.getElementById("display-id");
     displayId.innerHTML = "ID: " + conn.peer;
     enterRoom('join');
+    conn.send(["username", peerId, username])
   });
   conn.on('data', data => {
     // if (typeof(data) === "string") {
@@ -85,24 +136,37 @@ function validateId(id) {
     // } else if (Array.isArray(data)) {
     //   allMembers = data;
     // }
-    displayMessage(conn.peer, data);
+    switch (data[0]) {
+      case "message": {
+        displayMessage(conn.peer, data[1], data[2]);
+        break;
+      }
+      case "members": {
+        updateAllMembers(data[1]);
+        console.log(allMembers);
+      }
+    }
   });
 }
 
 function enterRoom(action) {
+  console.log(username);
   const messageBoardWidth = width/1.7;
 
-  home.style.display = "none";
+  chooseUsername.style.display = "none";
   chatRoom.style.display = "flex";
   messageBoard.style.width = messageBoardWidth + "px;";
   messageBoard.style.height= height/1.4 + "px";
 
   inputMessage.addEventListener("keypress", e => {
     if (e.keyCode === 13 && inputMessage.value.length > 0) {
-      sendMessage(peer, inputMessage.value);
+      sendMessage(peer, username, inputMessage.value);
       console.log(allConnections, allMembers);
     }
   });
+  sendButton.addEventListener("click", e => {
+    sendMessage(peer, username, inputMessage.value);
+  })
   // if (action === "create") {
   //   createRoom();
   // }
@@ -118,30 +182,52 @@ function updateAllConnections(conn) {
   }
 }
 
-function updateAllMembers() {
+function updateAllMembers(updated) {
   allMembers.length = 0;
-  allMembers.push(peerId);
-  for (let c of allConnections) allMembers.push(c.peer);
+  for (let m of updated) {
+    allMembers.push(m);
+  }
+  updateMemberDisplay();
 }
 
-function sendMessage(sender, msg) {
+function updateMemberDisplay() {
+  const displayMembers = document.getElementById("display-members");
+  if (allMembers.length > 0) {
+    let usernames = []
+    for (let m of allMembers) {
+      usernames.push(m[1]);
+    }
+    displayMembers.innerHTML = "Connected: " + usernames.join(", ");
+  }
+}
+
+function addMember(id, username) {
+  allMembers.push([id, username]);
+}
+
+function removeMembers(id, username) {
+
+}
+
+function sendMessage(senderId, senderName, msg) {
   for (let c of allConnections) {
     if (c && c.open) {
-      if (c.peer != sender) c.send(msg);
+      if (c.peer != senderId) c.send(["message", senderName, msg]);
     }
   }
-  displayMessage(sender, msg);
+  displayMessage(senderId, senderName, msg);
   inputMessage.value = "";
 }
 
-function displayMessage(sender, text) {
+function displayMessage(senderId, senderName, text) {
   const p = document.createElement("p");
-  const node = document.createTextNode(text);
+  const node = document.createTextNode(senderName + ":  " + text);
   p.appendChild(node);
   messageBoard.appendChild(p);
   messageBoard.scrollTo(0, messageBoard.scrollHeight);
   allMessages.push({
-    sender: peer,
+    senderId: peer,
+    username: senderName,
     message: text
   });
   console.log(allMessages);
