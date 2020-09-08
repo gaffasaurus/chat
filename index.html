@@ -8,8 +8,17 @@
     body {
       font-family: helvetica;
     }
+    #title {
+      text-align: center;
+      /* position: absolute;
+      top: 10%;
+      left: 50%;
+      transform: translate(-50%, 0); */
+      margin-top: 100px;
+      text-decoration: underline;
+    }
     #home {
-      display: flex;
+      display: none;
       flex-direction: column;
       align-items: center;
       text-align: center;
@@ -17,9 +26,10 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -70%);
+      margin-top: 50px;
     }
     #choose-username {
-      display: none;
+      display: flex;
       flex-direction: column;
       position: absolute;
       top: 50%;
@@ -65,13 +75,14 @@
   </style>
 </head>
 <body>
+  <h1 id="title">PeerJS Chatroom</h1>
   <div id="home">
-    <h1 id="title" style="text-align: center; margin-bottom: 50px;">PeerJS Chatroom</h1>
-    <button id="create-room-button" style="width: 200px; height: 50px; margin-bottom: 15px;" onclick="enterUsername('create')">Create Room</button>
+    <!-- <h1 id="title" style="text-align: center; margin-bottom: 50px;">PeerJS Chatroom</h1> -->
+    <button id="create-room-button" style="width: 200px; height: 50px; margin-bottom: 15px;" onclick="createRoom()">Create Room</button>
     <div id="join-room">
       <p style="font-size: 16px">Or Join Room With ID:</p>
       <input id="join-room-field" type="text" size="32" style="height: 25px" placeholder="Enter Room ID..."></input>
-      <button style="height: 30px" onclick="enterUsername('join')">Join</button>
+      <button style="height: 30px" onclick="joinRoom()">Join</button>
     </div>
     <p id="error-msg">
 
@@ -81,7 +92,7 @@
     <p style="font-size: 16px">Enter username:</p>
     <div id="input-username">
       <input id="username-field" type="text" size=32 style="height: 25px" placeholder="Enter username..."></input>
-      <button id = "submit-username" style="height: 30px">Join</button>
+      <button id = "submit-username" style="height: 30px">Enter</button>
     </div>
   </div>
   <div id="chatroom">

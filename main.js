@@ -1,6 +1,7 @@
 const width = window.innerWidth;
 const height = window.innerHeight;
 
+const title = document.getElementById("title");
 const chatRoom = document.getElementById("chatroom");
 const home = document.getElementById("home");
 const chooseUsername = document.getElementById("choose-username");
@@ -50,10 +51,11 @@ let username;
 let myColor;
 let isHost = false;
 initializePeer();
+enterUsername();
 
-function enterUsername(action) {
-  chooseUsername.style.display = "flex";
-  home.style.display = "none";
+function enterUsername() {
+  // chooseUsername.style.display = "flex";
+  // home.style.display = "none";
   const usernameField = document.getElementById("username-field");
   usernameField.addEventListener("keypress", e => {
     if (usernameField.value.length > 15 && e.keyCode !== 13) {
@@ -62,11 +64,7 @@ function enterUsername(action) {
     if (e.keyCode === 13) {
       if (usernameField.value.length > 0) {
         username = usernameField.value;
-        if (action === "create") {
-          createRoom();
-        } else {
-          joinRoom();
-        }
+        mainMenu();
       } else {
         alert("Username cannot be empty!");
       }
@@ -76,15 +74,16 @@ function enterUsername(action) {
   submitUsername.addEventListener("click", e => {
     if (usernameField.value.length > 0) {
       username = usernameField.value;
-      if (action === "create") {
-        createRoom();
-      } else {
-        joinRoom();
-      }
+      mainMenu();
     } else {
       alert("Username cannot be empty!");
     }
   });
+}
+
+function mainMenu() {
+  chooseUsername.style.display = "none";
+  home.style.display = "flex";
 }
 
 function initializePeer() {
@@ -147,7 +146,7 @@ function createRoom() {
     }
     peer.destroy();
   });
-  enterRoom('create');
+  enterRoom();
 }
 
 function joinRoom() {
@@ -173,8 +172,8 @@ function validateId(id) {
     // updateAllMembers();
     const displayId = document.getElementById("display-id");
     displayId.innerHTML = "ID: " + conn.peer;
-    enterRoom('join');
     conn.send(["username", peerId, username]);
+      enterRoom();
   });
   conn.on('data', data => {
     switch (data[0]) {
@@ -199,10 +198,11 @@ function validateId(id) {
   });
 }
 
-function enterRoom(action) {
+function enterRoom() {
   const messageBoardWidth = width/1.7;
 
-  chooseUsername.style.display = "none";
+  title.style.display = "none";
+  home.style.display = "none";
   chatRoom.style.display = "flex";
   messageBoard.style.width = messageBoardWidth + "px;";
   messageBoard.style.height= height/1.4 + "px";
