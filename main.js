@@ -37,10 +37,9 @@ const availableColors = [];
 refillColors();
 
 function refillColors() {
-  if (availableColors.length === 0) {
-    for (let color of colors) {
-      availableColors.push(color);
-    }
+  availableColors.length = 0;
+  for (let color of colors) {
+    availableColors.push(color);
   }
 }
 
@@ -296,6 +295,7 @@ function leaveRoom() {
     peer.disconnect();
     peer = new Peer();
     initializePeer();
+    refillColors();
     messageBoard.innerHTML = "";
     allConnections.length = 0;
     allMembers.length = 0;
