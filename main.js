@@ -260,8 +260,10 @@ function enterRoom() {
   title.style.display = "none";
   home.style.display = "none";
   chatRoom.style.display = "flex";
-  messageBoard.style.width = messageBoardWidth + "px;";
+  messageBoard.style.width = messageBoardWidth + "px";
   messageBoard.style.height= height/1.4 + "px";
+  messageBoard.style.maxWidth = messageBoardWidth + "px";
+  console.log(messageBoard.style.width, messageBoard.style.maxWidth);
   const messageBoardCoords = messageBoard.getBoundingClientRect();
   leaveRoomButton.style.top = (messageBoardCoords.top - 45) + "px";
   leaveRoomButton.style.left = messageBoardCoords.left + "px";
@@ -270,12 +272,12 @@ function enterRoom() {
     if (e.keyCode === 13 && inputMessage.value.length > 0) {
       sendMessage(peer, username, inputMessage.value, myColor);
       inputMessage.value = "";
-      console.log(allConnections, allMembers);
     }
   });
   sendButton.addEventListener("click", e => {
     if (inputMessage.value.length > 0) {
       sendMessage(peer, username, inputMessage.value, myColor);
+      inputMessage.value = "";
     }
   })
 }

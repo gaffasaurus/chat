@@ -61,6 +61,7 @@
       font-size: 16px;
       outline: 1.5px solid gray;
       overflow-y: scroll;
+      overflow-x: scroll;
       margin-bottom: 3px;
       padding-left: 20px;
     }
@@ -73,6 +74,7 @@
     #input-message {
       height: 30px;
       margin-right: 5px;
+      overflow: hidden;
     }
     #send-message {
       height: 35px;
@@ -98,7 +100,7 @@
   <div id="choose-username">
     <p style="font-size: 16px">Enter username:</p>
     <div id="input-username">
-      <input id="username-field" type="text" size=32 style="height: 25px" placeholder="Enter username..."></input>
+      <input id="username-field" type="text" size=32 style="height: 25px" placeholder="Enter username..." maxlength="12"></input>
       <button id = "submit-username" style="height: 30px">Enter</button>
     </div>
   </div>
@@ -111,7 +113,7 @@
         <p style="text-decoration: underline">Welcome to the room! Send the room ID above to friends to begin chatting!</p>
       </div>
       <div id="write-message">
-        <input type="text" size="95" id="input-message" placeholder="Write a message..."></input>
+        <input type="text" size="95" id="input-message" placeholder="Write a message..." maxlength="300"></input>
         <button id="send-message">Send</button>
       </div>
     </div>
