@@ -20,26 +20,26 @@ joinRoomField.addEventListener("keypress", e => {
 });
 const joinMsg = document.getElementById("error-msg");
 
-const colors = {
-  // red: "rgb(255, 0, 0)",
-  blue: "rgb(0, 0, 255)",
-  orange: "rgb(255,140,0)",
-  pink: "rgb(238, 130, 238)",
-  yellow: "rgb(255, 165, 0)",
-  purple: "rgb(106, 90, 205)",
-  // green: "rgb(60, 179, 113)",
-  cyan: "rgb(0, 255, 255)",
-  brown: "rgb(139,69,19)",
-  crimson: "rgb(220,20,60)",
-};
+const colors = [
+  // red: "rgb(255, 0, 0)", //red
+  "rgb(0, 0, 255)", //blue
+  "rgb(255,140,0)", //orange
+  "rgb(238, 130, 238)", //pink
+  "rgb(255, 165, 0)", //yellow
+  "rgb(106, 90, 205)", //purple
+  // green: "rgb(60, 179, 113)", //green
+  "rgb(0, 255, 255)", //cyan
+  "rgb(139,69,19)", //brown
+  "rgb(220,20,60)", //crimson
+];
 
 const availableColors = [];
 refillColors();
 
 function refillColors() {
   if (availableColors.length === 0) {
-    for (let color in colors) {
-      availableColors.push(colors[color]);
+    for (let color of colors) {
+      availableColors.push(color);
     }
   }
 }
@@ -47,7 +47,7 @@ function refillColors() {
 let allConnections = [];
 let allMembers = [];
 let allMessages = [];
-const peer = new Peer();
+let peer = new Peer();
 let peerId;
 let roomId;
 let username;
@@ -114,16 +114,37 @@ function createRoom() {
   isHost = true;
   myColor = availableColors.shift();
   console.log("room created");
-  addMember(peerId, username);
+  addMember(peerId, username, myColor);
   updateMemberDisplay();
   peer.on("connection", conn => {
     console.log("Received connection");
     updateAllConnections(conn);
-    console.log(allConnections);
+
     // updateAllMembers();
     // for (let c of allConnections) {
     //   // c.send(allConnections);
     //   c.send(allMembers);
+    conn.on('close', () => {
+      console.log("disconnected");
+      const dcMember = getMemberById(conn.peer);
+      //Add color of member who left back to the available colors
+      insertIntoArray(availableColors, 0, dcMember[2]);
+      removeMember(dcMember[0], dcMember[1]);
+      for (let c of allConnections) {
+        if (c && c.open) {
+          if (c.peer === dcMember[0]) {
+            console.log(allConnections);
+            removeFromArray(allConnections, c);
+            console.log(allConnections);
+            continue;
+          }
+          c.send(['members', allMembers]);
+        }
+      }
+      sendAnnouncement(dcMember[1] + " has left the room.", "rgb(255, 0, 0)");
+      updateMemberDisplay();
+    });
+
     conn.on('data', data => {
       switch (data[0]) {
         case "message": {
@@ -135,36 +156,36 @@ function createRoom() {
         //   break;
         // }
         case "username": {
-          addMember(data[1], data[2]);
+          const userColor = availableColors.shift();
+          addMember(data[1], data[2], userColor);
           for (let c of allConnections) {
             if (c && c.open) {
               c.send(['members', allMembers]);
             }
           }
-          conn.send(['color', availableColors.shift()]);
+          conn.send(['color', userColor]);
           sendAnnouncement(data[2] + " has joined the room.", "rgb(50,205,50)");
           updateMemberDisplay();
           break;
         }
         case "disconnect": {
           console.log("disconnected");
+          console.log(data[1], data[2]);
+          //Add color of member who left back to the available colors
+          insertIntoArray(availableColors, 0, getMember(data[1], data[2])[2]);
           removeMember(data[1], data[2]);
-          let joinNum;
           for (let c of allConnections) {
             if (c && c.open) {
               if (c.peer === data[1]) {
-                c.close();
-                joinNum = allConnections.indexOf(c);
+                console.log(allConnections);
                 removeFromArray(allConnections, c);
+                console.log(allConnections);
                 continue;
               }
               c.send(['members', allMembers]);
             }
           }
           sendAnnouncement(data[2] + " has left the room.", "rgb(255, 0, 0)");
-          if (joinNum) {
-            insertIntoArray(availableColors, joinNum + 1, colors.get(Array.from(colors.keys())[joinNum]));
-          }
           updateMemberDisplay();
           break;
         }
@@ -200,6 +221,10 @@ function validateId(id) {
     roomId = id;
     enterRoom();
   });
+  conn.on('close', () => {
+    alert("The host has ended the room. You have been returned to the home screen.");
+    leaveRoom();
+  })
   conn.on('data', data => {
     switch (data[0]) {
       case "message": {
@@ -219,10 +244,9 @@ function validateId(id) {
         myColor = data[1];
         break;
       }
-      case "close": {
-        alert("The host has closed the room.");
-        location.reload();
-        break;
+      case "disconnect": {
+        alert("The host has ended the room. You have been returned to the home screen.");
+        leaveRoom();
       }
     }
   });
@@ -252,32 +276,43 @@ function enterRoom() {
       sendMessage(peer, username, inputMessage.value, myColor);
     }
   })
-  // if (action === "create") {
-  //   createRoom();
-  // }
-    // conn.on('data', data => {
-    //   console.log("received data");
-    //   sendMessage(data);
-    // });
 }
 
 function leaveRoom() {
   if (!isHost) {
-    console.log(allConnections);
     for (let c of allConnections) {
       c.send(["disconnect", peerId, username]);
       break;
     }
-    const messageHistory = messageBoard.childNodes;
-    messageHistory.innerHTML = "";
+    messageBoard.innerHTML = "";
+    allConnections.length = 0;
+    allMembers.length = 0;
+    mainMenu();
+  } else {
+    for (let c of allConnections) {
+      c.send(["disconnect"]);
+      break;
+    }
+    peer.disconnect();
+    peer = new Peer();
+    initializePeer();
+    messageBoard.innerHTML = "";
+    allConnections.length = 0;
+    allMembers.length = 0;
     mainMenu();
   }
 }
 
 function updateAllConnections(conn) {
-  if (!allConnections.includes(conn)) {
-    allConnections.push(conn);
-  }
+  // if (!allConnections.includes(conn)) {
+  //   allConnections.push(conn);
+  // }
+  // for (let c of allConnections) {
+  //   if (c.peer === conn.peer) {
+  //     return;
+  //   }
+  // }
+  allConnections.push(conn);
 }
 
 function updateAllMembers(updated) {
@@ -299,15 +334,31 @@ function updateMemberDisplay() {
   }
 }
 
-function addMember(id, username) {
-  allMembers.push([id, username]);
+function addMember(id, username, color) {
+  allMembers.push([id, username, color]);
 }
 
-function removeMember(id, username) {
+function removeMember(id, name) {
   for (let member of allMembers) {
-    if (member[0] === id && member[1] === username) {
+    if (member[0] === id && member[1] === name) {
       removeFromArray(allMembers, member);
       break;
+    }
+  }
+}
+
+function getMember(id, name) {
+  for (let member of allMembers) {
+    if (member[0] === id && member[1] === name) {
+      return member;
+    }
+  }
+}
+
+function getMemberById(id) {
+  for (let member of allMembers) {
+    if (member[0] === id) {
+      return member;
     }
   }
 }
@@ -344,7 +395,6 @@ function displayMessage(senderId, senderName, text, senderColor) {
     username: senderName,
     message: text
   });
-  console.log(allMessages);
 }
 
 function sendAnnouncement(text, color) {
@@ -360,7 +410,8 @@ function displayAnnouncement(text, color) {
   const p = document.createElement("p");
   messageBoard.appendChild(p);
   p.style.color = color;
-  p.innerHTML = "<span style='color: gray'>" + createTimeStamp() + "  -  </span><span style='color: " + color + "';>" + text + "</span>";
+  //<span style='color: gray'>" + createTimeStamp() + "    </span>
+  p.innerHTML = "<span style='color: " + color + "';>" + "-- " + text + " --" + "</span>";
   messageBoard.scrollTo(0, messageBoard.scrollHeight);
   allMessages.push({
     senderId: "server message",
@@ -372,17 +423,35 @@ function displayAnnouncement(text, color) {
 function createTimeStamp() {
   const time = new Date();
   let timeStamp;
+  let hours;
   let minutes;
+  let period;
   if (time.getMinutes() < 10) {
     minutes = "0" + time.getMinutes();
   } else {
     minutes = time.getMinutes();
   }
-  if (time.getHours() > 12) {
-    timeStamp = (time.getHours() - 12) + ":" + minutes + " PM";
+  let currentHour = time.getHours();
+  if (currentHour < 13) {
+    period = "AM";
+    if (currentHour < 10) {
+      if (currentHour === 0) {
+        currentHour = 12;
+        hours = currentHour
+      } else {
+        hours = "0" + currentHour;
+      }
+    } else {
+      hours = currentHour;
+    }
   } else {
-    timeStamp = time.getHours() + ":" + minutes + " AM";
+    period = "PM";
+    hours = currentHour - 12;
+    if (hours < 10) {
+      hours = "0" + hours;
+    }
   }
+  timeStamp = hours + ":" + minutes + " " + period;
   return timeStamp;
 }
 
