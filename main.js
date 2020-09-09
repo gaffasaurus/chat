@@ -4,31 +4,33 @@ const height = window.innerHeight;
 const title = document.getElementById("title");
 const chatRoom = document.getElementById("chatroom");
 const home = document.getElementById("home");
+const displayId = document.getElementById("display-id");
 const chooseUsername = document.getElementById("choose-username");
 const messageBoard = document.getElementById("message-board");
 const inputMessage = document.getElementById("input-message");
 const sendButton = document.getElementById("send-message");
+const leaveRoomButton = document.getElementById("leave-room");
 
 const joinRoomField = document.getElementById("join-room-field");
 joinRoomField.addEventListener("keypress", e => {
   if (e.keyCode === 13) {
     const value = joinRoomField.value;
-    enterUsername();
+    joinRoom();
   }
 });
 const joinMsg = document.getElementById("error-msg");
 
 const colors = {
-  red: "rgb(255, 0, 0)",
+  // red: "rgb(255, 0, 0)",
   blue: "rgb(0, 0, 255)",
-  green: "rgb(60, 179, 113)",
+  orange: "rgb(255,140,0)",
   pink: "rgb(238, 130, 238)",
   yellow: "rgb(255, 165, 0)",
   purple: "rgb(106, 90, 205)",
+  // green: "rgb(60, 179, 113)",
   cyan: "rgb(0, 255, 255)",
-  orange: "rgb(255,140,0)",
   brown: "rgb(139,69,19)",
-  crimson: "rgb(220,20,60)"
+  crimson: "rgb(220,20,60)",
 };
 
 const availableColors = [];
@@ -47,6 +49,7 @@ let allMembers = [];
 let allMessages = [];
 const peer = new Peer();
 let peerId;
+let roomId;
 let username;
 let myColor;
 let isHost = false;
@@ -54,8 +57,8 @@ initializePeer();
 enterUsername();
 
 function enterUsername() {
-  // chooseUsername.style.display = "flex";
-  // home.style.display = "none";
+  chooseUsername.style.display = "flex";
+  home.style.display = "none";
   const usernameField = document.getElementById("username-field");
   usernameField.addEventListener("keypress", e => {
     if (usernameField.value.length > 15 && e.keyCode !== 13) {
@@ -83,7 +86,10 @@ function enterUsername() {
 
 function mainMenu() {
   chooseUsername.style.display = "none";
+  chatRoom.style.display = "none";
   home.style.display = "flex";
+  title.style.display = "block";
+  joinMsg.innerHTML = "";
 }
 
 function initializePeer() {
@@ -124,6 +130,10 @@ function createRoom() {
           sendMessage(conn.peer, data[1], data[2], data[3]);
           break;
         }
+        // case "announcement": {
+        //   sendAnnouncement(data[1], data[2]);
+        //   break;
+        // }
         case "username": {
           addMember(data[1], data[2]);
           for (let c of allConnections) {
@@ -132,19 +142,34 @@ function createRoom() {
             }
           }
           conn.send(['color', availableColors.shift()]);
+          sendAnnouncement(data[2] + " has joined the room.", "rgb(50,205,50)");
+          updateMemberDisplay();
+          break;
+        }
+        case "disconnect": {
+          console.log("disconnected");
+          removeMember(data[1], data[2]);
+          let joinNum;
+          for (let c of allConnections) {
+            if (c && c.open) {
+              if (c.peer === data[1]) {
+                c.close();
+                joinNum = allConnections.indexOf(c);
+                removeFromArray(allConnections, c);
+                continue;
+              }
+              c.send(['members', allMembers]);
+            }
+          }
+          sendAnnouncement(data[2] + " has left the room.", "rgb(255, 0, 0)");
+          if (joinNum) {
+            insertIntoArray(availableColors, joinNum + 1, colors.get(Array.from(colors.keys())[joinNum]));
+          }
           updateMemberDisplay();
           break;
         }
       }
     });
-  });
-  peer.on("close", () => {
-    console.log("Closed");
-    removeMember(peerId, username);
-    for (let c of allConnections) {
-      c.send(['members', allMembers]);
-    }
-    peer.destroy();
   });
   enterRoom();
 }
@@ -170,15 +195,19 @@ function validateId(id) {
     console.log("connected!");
     updateAllConnections(conn);
     // updateAllMembers();
-    const displayId = document.getElementById("display-id");
     displayId.innerHTML = "ID: " + conn.peer;
     conn.send(["username", peerId, username]);
-      enterRoom();
+    roomId = id;
+    enterRoom();
   });
   conn.on('data', data => {
     switch (data[0]) {
       case "message": {
         displayMessage(conn.peer, data[1], data[2], data[3]);
+        break;
+      }
+      case "announcement": {
+        displayAnnouncement(data[1], data[2])
         break;
       }
       case "members": {
@@ -193,6 +222,7 @@ function validateId(id) {
       case "close": {
         alert("The host has closed the room.");
         location.reload();
+        break;
       }
     }
   });
@@ -206,6 +236,9 @@ function enterRoom() {
   chatRoom.style.display = "flex";
   messageBoard.style.width = messageBoardWidth + "px;";
   messageBoard.style.height= height/1.4 + "px";
+  const messageBoardCoords = messageBoard.getBoundingClientRect();
+  leaveRoomButton.style.top = (messageBoardCoords.top - 45) + "px";
+  leaveRoomButton.style.left = messageBoardCoords.left + "px";
 
   inputMessage.addEventListener("keypress", e => {
     if (e.keyCode === 13 && inputMessage.value.length > 0) {
@@ -226,6 +259,19 @@ function enterRoom() {
     //   console.log("received data");
     //   sendMessage(data);
     // });
+}
+
+function leaveRoom() {
+  if (!isHost) {
+    console.log(allConnections);
+    for (let c of allConnections) {
+      c.send(["disconnect", peerId, username]);
+      break;
+    }
+    const messageHistory = messageBoard.childNodes;
+    messageHistory.innerHTML = "";
+    mainMenu();
+  }
 }
 
 function updateAllConnections(conn) {
@@ -291,14 +337,7 @@ function displayMessage(senderId, senderName, text, senderColor) {
   // const node = document.createTextNode("<span style= 'color: " + myColor + "';>" +  senderName + ":  </span>" + text);
   // p.appendChild(node);
   messageBoard.appendChild(p);
-  const time = new Date();
-  let timeStamp;
-  if (time.getHours() > 12) {
-    timeStamp = (time.getHours() - 12) + ":" + time.getMinutes() + " PM";
-  } else {
-    timeStamp = time.getHours() + ":" + time.getMinutes() + " AM";
-  }
-  p.innerHTML = "<span style='color: gray'>" + timeStamp + "  -  " + "</span>" + "<span style='color: " + senderColor + "';>" + senderName + ":  </span>" + text;
+  p.innerHTML = "<span style='color: gray'>" + createTimeStamp() + "  -  </span><span style='color: " + senderColor + "';>" + senderName + ":  </span>" + text;
   messageBoard.scrollTo(0, messageBoard.scrollHeight);
   allMessages.push({
     senderId: peer,
@@ -308,8 +347,51 @@ function displayMessage(senderId, senderName, text, senderColor) {
   console.log(allMessages);
 }
 
+function sendAnnouncement(text, color) {
+  for (let c of allConnections) {
+    if (c && c.open) {
+      c.send(["announcement", text, color]);
+    }
+  }
+  displayAnnouncement(text, color);
+}
+
+function displayAnnouncement(text, color) {
+  const p = document.createElement("p");
+  messageBoard.appendChild(p);
+  p.style.color = color;
+  p.innerHTML = "<span style='color: gray'>" + createTimeStamp() + "  -  </span><span style='color: " + color + "';>" + text + "</span>";
+  messageBoard.scrollTo(0, messageBoard.scrollHeight);
+  allMessages.push({
+    senderId: "server message",
+    username: "server message",
+    message: text
+  });
+}
+
+function createTimeStamp() {
+  const time = new Date();
+  let timeStamp;
+  let minutes;
+  if (time.getMinutes() < 10) {
+    minutes = "0" + time.getMinutes();
+  } else {
+    minutes = time.getMinutes();
+  }
+  if (time.getHours() > 12) {
+    timeStamp = (time.getHours() - 12) + ":" + minutes + " PM";
+  } else {
+    timeStamp = time.getHours() + ":" + minutes + " AM";
+  }
+  return timeStamp;
+}
+
 function removeFromArray(arr, element) {
   arr.splice(arr.indexOf(element), 1);
+}
+
+function insertIntoArray(arr, index, element) {
+  arr.splice(index, 0, element);
 }
 
 // function validateId(id) {

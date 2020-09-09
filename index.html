@@ -17,17 +17,6 @@
       margin-top: 100px;
       text-decoration: underline;
     }
-    #home {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -70%);
-      margin-top: 50px;
-    }
     #choose-username {
       display: flex;
       flex-direction: column;
@@ -44,11 +33,29 @@
     #username-field {
       margin-right: 5px;
     }
+    #home {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -70%);
+      margin-top: 50px;
+    }
+    #join-room {
+
+    }
     #chatroom {
       display: none;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+    }
+    #leave-room {
+      position: absolute;
+      height: 30px;
     }
     #message-board {
       font-size: 16px;
@@ -77,13 +84,13 @@
 <body>
   <h1 id="title">PeerJS Chatroom</h1>
   <div id="home">
-    <!-- <h1 id="title" style="text-align: center; margin-bottom: 50px;">PeerJS Chatroom</h1> -->
     <button id="create-room-button" style="width: 200px; height: 50px; margin-bottom: 15px;" onclick="createRoom()">Create Room</button>
     <div id="join-room">
       <p style="font-size: 16px">Or Join Room With ID:</p>
       <input id="join-room-field" type="text" size="32" style="height: 25px" placeholder="Enter Room ID..."></input>
       <button style="height: 30px" onclick="joinRoom()">Join</button>
     </div>
+    <button id="change-username" style="height: 30px; position: absolute; top: 150%" onclick="enterUsername()">← Change username</button>
     <p id="error-msg">
 
     </p>
@@ -96,6 +103,7 @@
     </div>
   </div>
   <div id="chatroom">
+    <button id="leave-room" onclick=leaveRoom()>← Leave Room</button>
     <h1 id="display-id" style="font-size: 20px">ID: Generating...</h1>
     <p id="display-members" style="margin-top: -5px; text-align: center">Awaiting connection...</p>
     <div id="messages">
