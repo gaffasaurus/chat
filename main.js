@@ -107,6 +107,9 @@ function initializePeer() {
       alert(err);
     }
   });
+  peer.on("disconnected", () => {
+    leaveRoom();
+  });
 }
 
 function createRoom() {
@@ -220,10 +223,10 @@ function validateId(id) {
     roomId = id;
     enterRoom();
   });
-  conn.on('close', () => {
-    alert("The host has ended the room. You have been returned to the home screen.");
-    leaveRoom();
-  })
+  // conn.on('close', () => {
+  //   alert("The host has ended the room. You have been returned to the home screen.");
+  //   leaveRoom();
+  // })
   conn.on('data', data => {
     switch (data[0]) {
       case "message": {
@@ -292,7 +295,6 @@ function leaveRoom() {
       c.send(["disconnect"]);
       break;
     }
-    peer.disconnect();
     peer = new Peer();
     initializePeer();
     refillColors();
@@ -463,18 +465,12 @@ function insertIntoArray(arr, index, element) {
   arr.splice(index, 0, element);
 }
 
-// function validateId(id) {
-//   const dataConnection = peer.connect(id);
-//   const joinMsg = document.getElementById("error-msg");
-//   joinMsg.style = "font-size: 16px";
-//   joinMsg.innerHTML = "Connecting...";
-//   console.log(dataConnection);
-//   dataConnection.on('open', () => {
-//     joinRoom();
-//     return;
-//   });
-//   setTimeout(() => {
-//     joinMsg.innerHTML = "Unable to connect to the room. Check ID and try again.";
-//     joinMsg.style.color = "red";
-//   }, 5000);
-// }
+window.addEventListener("resize", () => {
+  const messageBoardCoords = messageBoard.getBoundingClientRect();
+  leaveRoomButton.style.top = (messageBoardCoords.top - 45) + "px";
+  leaveRoomButton.style.left = messageBoardCoords.left + "px";
+});
+
+window.addEventListener("unload", () => {
+  leaveRoom();
+});
