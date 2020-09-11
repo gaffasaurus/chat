@@ -1,5 +1,5 @@
-const width = window.innerWidth;
-const height = window.innerHeight;
+let width = window.innerWidth;
+let height = window.innerHeight;
 
 const title = document.getElementById("title");
 const chatRoom = document.getElementById("chatroom");
@@ -46,14 +46,40 @@ function refillColors() {
 let allConnections = [];
 let allMembers = [];
 let allMessages = [];
-let peer = new Peer();
+const server = {
+    secure: true,
+    host: "peerjs-server-1.herokuapp.com",
+    port: 443,
+    debug: 2
+};
 let peerId;
+let peer = new Peer(generateId(), server);
 let roomId;
 let username;
 let myColor;
 let isHost = false;
 initializePeer();
 enterUsername();
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+function generateId() {
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const numbers = "0123456789";
+  let id = "";
+  id += letters[getRandomInt(letters.length)];
+  for (let i = 0; i < 3; i++) {
+    id += numbers[getRandomInt(numbers.length)];
+  }
+  for (let i = 0; i < 2; i++) {
+    id += letters[getRandomInt(letters.length)];
+  }
+  id += numbers[getRandomInt(numbers.length)];
+  peerId = id;
+  return id;
+}
 
 function enterUsername() {
   chooseUsername.style.display = "flex";
@@ -94,7 +120,7 @@ function mainMenu() {
 function initializePeer() {
   peer.on("open", id => {
     console.log("My ID: " + id);
-    peerId = id;
+    // peerId = id;
     const displayId = document.getElementById("display-id");
     displayId.innerHTML = "ID: " + peerId;
   });
@@ -107,9 +133,9 @@ function initializePeer() {
       alert(err);
     }
   });
-  peer.on("disconnected", () => {
-    leaveRoom();
-  });
+  // peer.on("disconnected", () => {
+  //   leaveRoom();
+  // });
 }
 
 function createRoom() {
@@ -247,7 +273,7 @@ function validateId(id) {
         break;
       }
       case "disconnect": {
-        alert("The host has ended the room. You have been returned to the home screen.");
+        alert("The host has ended the room. You will be returned to the home screen.");
         leaveRoom();
       }
     }
@@ -255,18 +281,18 @@ function validateId(id) {
 }
 
 function enterRoom() {
-  const messageBoardWidth = width/1.7;
+  // const messageBoardWidth = width/1.7;
 
   title.style.display = "none";
   home.style.display = "none";
   chatRoom.style.display = "flex";
-  messageBoard.style.width = messageBoardWidth + "px";
-  messageBoard.style.height= height/1.4 + "px";
-  messageBoard.style.maxWidth = messageBoardWidth + "px";
-  console.log(messageBoard.style.width, messageBoard.style.maxWidth);
-  const messageBoardCoords = messageBoard.getBoundingClientRect();
-  leaveRoomButton.style.top = (messageBoardCoords.top - 45) + "px";
-  leaveRoomButton.style.left = messageBoardCoords.left + "px";
+  setChatroomDimensions();
+  // messageBoard.style.width = messageBoardWidth + "px";
+  // messageBoard.style.height= height/1.4 + "px";
+  // messageBoard.style.maxWidth = messageBoardWidth + "px";
+  // const messageBoardCoords = messageBoard.getBoundingClientRect();
+  // leaveRoomButton.style.top = (messageBoardCoords.top - 45) + "px";
+  // leaveRoomButton.style.left = messageBoardCoords.left + "px";
 
   inputMessage.addEventListener("keypress", e => {
     if (e.keyCode === 13 && inputMessage.value.length > 0) {
@@ -280,6 +306,16 @@ function enterRoom() {
       inputMessage.value = "";
     }
   })
+}
+
+function setChatroomDimensions() {
+  const messageBoardWidth = width/1.7;
+  messageBoard.style.width = messageBoardWidth + "px";
+  messageBoard.style.height= height/1.4 + "px";
+  messageBoard.style.maxWidth = messageBoardWidth + "px";
+  const messageBoardCoords = messageBoard.getBoundingClientRect();
+  leaveRoomButton.style.top = (messageBoardCoords.top - 45) + "px";
+  leaveRoomButton.style.left = messageBoardCoords.left + "px";
 }
 
 function leaveRoom() {
@@ -297,7 +333,7 @@ function leaveRoom() {
       c.send(["disconnect"]);
       break;
     }
-    peer = new Peer();
+    peer = new Peer(generateId(), server);
     initializePeer();
     refillColors();
     messageBoard.innerHTML = "";
@@ -334,7 +370,8 @@ function updateMemberDisplay() {
     for (let m of allMembers) {
       usernames.push(m[1]);
     }
-    displayMembers.innerHTML = "Connected: " + usernames.join(", ");
+    displayMembers.innerHTML = "";
+    displayMembers.appendChild(document.createTextNode("Connected: " + usernames.join(", ")));
   }
 }
 
@@ -392,7 +429,8 @@ function displayMessage(senderId, senderName, text, senderColor) {
   // const node = document.createTextNode("<span style= 'color: " + myColor + "';>" +  senderName + ":  </span>" + text);
   // p.appendChild(node);
   messageBoard.appendChild(p);
-  p.innerHTML = "<span style='color: gray'>" + createTimeStamp() + "  -  </span><span style='color: " + senderColor + "';>" + senderName + ":  </span>" + text;
+  p.innerHTML = "<span style='color: gray'>" + createTimeStamp() + "  -  </span><span style='color: " + senderColor + "';>" + senderName + ":  </span>";
+  p.appendChild(document.createTextNode(text));
   messageBoard.scrollTo(0, messageBoard.scrollHeight);
   allMessages.push({
     senderId: peer,
@@ -468,9 +506,9 @@ function insertIntoArray(arr, index, element) {
 }
 
 window.addEventListener("resize", () => {
-  const messageBoardCoords = messageBoard.getBoundingClientRect();
-  leaveRoomButton.style.top = (messageBoardCoords.top - 45) + "px";
-  leaveRoomButton.style.left = messageBoardCoords.left + "px";
+  width = window.innerWidth;
+  height = window.innerHeight;
+  setChatroomDimensions();
 });
 
 window.addEventListener("unload", () => {
