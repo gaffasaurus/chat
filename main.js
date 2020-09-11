@@ -429,7 +429,7 @@ function displayMessage(senderId, senderName, text, senderColor) {
   // const node = document.createTextNode("<span style= 'color: " + myColor + "';>" +  senderName + ":  </span>" + text);
   // p.appendChild(node);
   messageBoard.appendChild(p);
-  p.innerHTML = "<span style='color: gray'>" + createTimeStamp() + "  -  </span><span style='color: " + senderColor + "';>" + senderName + ":  </span>";
+  p.innerHTML = "<span style='color: gray'>" + createTimeStamp() + "  -  </span><span style='color: " + senderColor + "';>" + senderName.replace(/</g, "&lt;").replace(/>/g, "&gt;") + ":  </span>";
   p.appendChild(document.createTextNode(text));
   messageBoard.scrollTo(0, messageBoard.scrollHeight);
   allMessages.push({
