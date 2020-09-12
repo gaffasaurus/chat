@@ -50,7 +50,10 @@ const server = {
     secure: true,
     host: "peerjs-server-1.herokuapp.com",
     port: 443,
-    debug: 2
+    debug: 2,
+    config: {'iceServers': [
+      { url: "stun:stun.l.google.com:19302" }
+    ]}
 };
 let peerId;
 let peer = new Peer(generateId(), server);
@@ -58,6 +61,7 @@ let roomId;
 let username;
 let myColor;
 let isHost = false;
+let enteredRoom = false;
 initializePeer();
 enterUsername();
 
@@ -115,6 +119,8 @@ function mainMenu() {
   home.style.display = "flex";
   title.style.display = "block";
   joinMsg.innerHTML = "";
+  joinMsg.style.color = "";
+  enteredRoom = false;
 }
 
 function initializePeer() {
@@ -278,11 +284,18 @@ function validateId(id) {
       }
     }
   });
+  setTimeout(() => {
+    if (!enteredRoom) {
+      joinMsg.innerHTML = (id.length > 0 ? "Error: Could not connect to peer " + id : "A problem occurred while connecting to the room.");
+      joinMsg.style.color = "red";
+    }
+  }, 4000)
 }
 
 function enterRoom() {
   // const messageBoardWidth = width/1.7;
-
+  console.log("entered room");
+  enteredRoom = true;
   title.style.display = "none";
   home.style.display = "none";
   chatRoom.style.display = "flex";
@@ -412,7 +425,6 @@ function getMemberById(id) {
 // }
 
 function sendMessage(senderId, senderName, msg, senderColor) {
-  console.log(senderColor);
   for (let c of allConnections) {
     if (c && c.open) {
       if (c.peer != senderId) c.send(["message", senderName, msg, senderColor]);
